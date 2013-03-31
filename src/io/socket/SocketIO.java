@@ -211,8 +211,12 @@ public class SocketIO {
 			this.callback = callback;
 		}
 		if (this.callback != null && this.url != null) {
+		    String queryArgs = 
+		      (this.url.getQuery() != null && !(this.url.getQuery().isEmpty())) ?
+		                    "?" + this.url.getQuery() 
+		                    : "";
 			final String origin = this.url.getProtocol() + "://"
-					+ this.url.getAuthority();
+					+ this.url.getAuthority() + queryArgs;
 			this.namespace = this.url.getPath();
 			if (this.namespace.equals("/")) {
 				this.namespace = "";

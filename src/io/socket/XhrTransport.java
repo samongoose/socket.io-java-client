@@ -76,8 +76,13 @@ class XhrTransport implements IOTransport {
 			while (isConnect()) {
 				try {
 					String line;
-					URL url = new URL(XhrTransport.this.url.toString() + "?t="
-							+ System.currentTimeMillis());
+					boolean argsExist = XhrTransport.this.url.getQuery() != null
+					                    && !(XhrTransport.this.url.getQuery().isEmpty());
+					    
+					URL url = new URL(XhrTransport.this.url.toString() + 
+					         (argsExist ? "&" : "?") + 
+					         "t=" + System.currentTimeMillis());
+					
 					urlConnection = (HttpURLConnection) url.openConnection();
 					SSLContext context = IOConnection.getSslContext();
 					if(urlConnection instanceof HttpsURLConnection && context != null) {
@@ -143,9 +148,15 @@ class XhrTransport implements IOTransport {
 	 */
 	public static IOTransport create(URL url, IOConnection connection) {
 		try {
-			URL xhrUrl = new URL(url.toString() + IOConnection.SOCKET_IO_1
-					+ TRANSPORT_NAME + "/" + connection.getSessionId());
-			return new XhrTransport(xhrUrl, connection);
+		    URL origin = new URL(url.getProtocol() + "://" + url.getAuthority());
+	        String queryArgs = "";
+	        if (url.getQuery() != null && url.getQuery() != "") {
+	            queryArgs = "?" + url.getQuery();
+	        }
+	        URL xhrUrl = new URL(origin.toString() + IOConnection.SOCKET_IO_1
+	                    + TRANSPORT_NAME + "/" + connection.getSessionId() + queryArgs);
+
+	        return new XhrTransport(xhrUrl, connection);
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(
 					"Malformed Internal url. This should never happen. Please report a bug.",

@@ -1,6 +1,7 @@
 package io.socket;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.regex.Pattern;
@@ -17,12 +18,24 @@ class WebsocketTransport extends WebSocketClient implements IOTransport {
     public static final String TRANSPORT_NAME = "websocket";
     private IOConnection connection;
     public static IOTransport create(URL url, IOConnection connection) {
-        URI uri = URI.create(
-                PATTERN_HTTP.matcher(url.toString()).replaceFirst("ws")
-                + IOConnection.SOCKET_IO_1 + TRANSPORT_NAME
-                + "/" + connection.getSessionId());
+        try {
+            URL origin = new URL(url.getProtocol() + "://" + url.getAuthority());
+            String queryArgs = "";
+            if (url.getQuery() != null && url.getQuery() != "") {
+                queryArgs = "?" + url.getQuery();
+            }
+            URI uri = URI.create(
+                    PATTERN_HTTP.matcher(origin.toString()).replaceFirst("ws")
+                    + IOConnection.SOCKET_IO_1 + TRANSPORT_NAME
+                    + "/" + connection.getSessionId() + queryArgs);
 
-        return new WebsocketTransport(uri, connection);
+            return new WebsocketTransport(uri, connection);
+
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(
+                    "Malformed Internal url. This should never happen. Please report a bug.",
+                    e);
+        }
     }
 
     public WebsocketTransport(URI uri, IOConnection connection) {
